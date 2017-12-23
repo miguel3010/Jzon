@@ -14,7 +14,7 @@ from Jzon import jsonify
 class model(object):
     def __init__(self):
         self.id = 30
-        self.name = "Miguel Ángel Campos"
+        self.name = "Miguel Angel Campos"
         self.height = 1.80
         self.intExample = 45
         self.boolExample = True
@@ -33,6 +33,7 @@ class model2(object):
 
 a = model()
 print(jsonify(a))
+>>>{"boolExample":"true","arrayExample":[{"salary":100.45,"bo":"true"}],"complexN":{"type":"complex","real":1.0,"imag":2.0},"name":"Miguel Angel Campos","id":30,"sex":"M","model2":{"salary":100.45,"bo":"true"},"intExample":45,"height":1.8,"date":"2017-12-23T14:53:42"}
 ```
 
 ## Authors

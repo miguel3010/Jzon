@@ -1,10 +1,14 @@
 import datetime
 import types
+import json
 
 # ENCODING
 
 
 def isClass(model):
+    if(model is None):
+        return False
+    
     if(isinstance(model, object)):
         return not(isinstance(model, bool)
                    or isinstance(model, str)
@@ -18,6 +22,19 @@ def isClass(model):
 
 
 def jsonify(model):
+    """
+    Serialization of an object class, dict or list into JSON format
+
+    Arguments:
+        model {class object, dict or list} -- The model to be serialized
+
+    Returns:
+        [string] -- JSON Formatted string of the model
+    """
+
+    if(model is None):
+        return "null"
+
     json = ""
     if(isinstance(model, list)):
         json = _encode_list_data(model)
@@ -84,7 +101,12 @@ def _raw_model_encode(model, items):
         if(b and valid):
             json += ","
             valid = False
-        attr = getattr(model, attribute)
+        attr = None
+        try:
+            attr = getattr(model, attribute)
+        except Exception:
+            pass
+
         if(isinstance(attr, dict)):
             string = _encode_dict_data(attr)
             if(string is None or string == ""):
@@ -117,6 +139,8 @@ def _encode_primitive_data_attribute(a, attribute, value):
 
 
 def _encode_primitive_data(value):
+    if(value is None):
+        return "null"
     if(isinstance(value, bool)):
         return str(value).lower()
     elif(isinstance(value, str)):
@@ -131,3 +155,46 @@ def _encode_primitive_data(value):
         return "{\"type\":\"complex\",\"real\":" + \
             str(value.real) + ",\"imag\":" + str(value.imag) + "}"
     return "\"\""
+
+# DECODING
+
+
+def unJsonify(json_, typed=None):
+    if(typed is None):
+        return unJsonify(json_, {})
+
+    if(isinstance(typed, dict)):
+        return json.loads(json_)
+    elif (isClass(typed)):
+        dict_ = unJsonify(json_)
+        for key, value in dict_.items():
+            if(isClass(getattr(typed, key))):
+                setattr(typed, key, parseModel(typed, key, value))
+            else:
+                try:
+                    setattr(typed, key, value)
+                except Exception:
+                    pass
+        return typed
+
+
+def _parse_from_dict(typed, model):
+    dict_ = model
+    for key, value in dict_.items():
+        if(isClass(getattr(typed, key))):
+            setattr(typed, key, parseModel(typed, key, value))
+        else:
+            try:
+                setattr(typed, key, value)
+            except Exception:
+                pass
+    return typed
+
+
+def parseModel(typed, key, value):
+    clas = getattr(typed, key).__class__
+    module = __import__(clas.__module__)
+    class_ = getattr(module, clas.__name__)
+    instance = class_()
+    instance = _parse_from_dict(instance, value)
+    return instance

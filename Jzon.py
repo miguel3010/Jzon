@@ -8,7 +8,7 @@ import json
 def isClass(model):
     if(model is None):
         return False
-    
+
     if(isinstance(model, object)):
         return not(isinstance(model, bool)
                    or isinstance(model, str)
@@ -160,6 +160,16 @@ def _encode_primitive_data(value):
 
 
 def unJsonify(json_, typed=None):
+    """
+    Deserialization of an object class, dict or list into Python Object class or dict
+
+    Arguments:
+        json_ {JSON formatted text} -- The text to be deserialized
+        typed(default = dict)   --      The class type that apply to the Python class
+    Returns:
+        [type(typed)] -- dict if arg [typed] is None
+    """
+
     if(typed is None):
         return unJsonify(json_, {})
 
@@ -169,7 +179,7 @@ def unJsonify(json_, typed=None):
         dict_ = unJsonify(json_)
         for key, value in dict_.items():
             if(isClass(getattr(typed, key))):
-                setattr(typed, key, parseModel(typed, key, value))
+                setattr(typed, key, _parseModel(typed, key, value))
             else:
                 try:
                     setattr(typed, key, value)
@@ -182,7 +192,7 @@ def parse_from_dict(typed, model):
     dict_ = model
     for key, value in dict_.items():
         if(isClass(getattr(typed, key))):
-            setattr(typed, key, parseModel(typed, key, value))
+            setattr(typed, key, _parseModel(typed, key, value))
         else:
             try:
                 setattr(typed, key, value)
@@ -191,7 +201,7 @@ def parse_from_dict(typed, model):
     return typed
 
 
-def parseModel(typed, key, value):
+def _parseModel(typed, key, value):
     clas = getattr(typed, key).__class__
     module = __import__(clas.__module__)
     class_ = getattr(module, clas.__name__)

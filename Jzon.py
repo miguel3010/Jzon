@@ -18,15 +18,18 @@ def isClass(model):
 
 
 def jsonify(model):
+    json = ""
     if(isinstance(model, list)):
-        return _encode_list_data(model)
+        json = _encode_list_data(model)
     if(isinstance(model, dict)):
-        return _encode_dict_data(model)
+        json =  _encode_dict_data(model)
     elif (isClass(model)):
-        return _encode_model_data(model)
+        json =  _encode_model_data(model)
     else:
-        return ""
-
+        json =  ""
+    
+    return str(json)
+     
 
 def _encode_list_data(model):
     json = "["

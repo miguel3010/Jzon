@@ -17,15 +17,11 @@ class model(object):
         self.g = []
         self.g.append(model2())
 
-    def toJSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__, 
-            sort_keys=True, indent=4)  
-
 class model2(object):
     def __init__(self):
         self.salary = 100.45
-        self.bo = True
+        self.new_employee = True
 
 
 a = model()
-print(jsonify(a)) 
+print(jsonify(a))

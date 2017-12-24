@@ -21,19 +21,24 @@ def jsonify(model):
     json = ""
     if(isinstance(model, list)):
         json = _encode_list_data(model)
-    if(isinstance(model, dict)):
-        json =  _encode_dict_data(model)
+    elif(isinstance(model, dict)):
+        json = _encode_dict_data(model)
     elif (isClass(model)):
-        json =  _encode_model_data(model)
+        json = _encode_model_data(model)
     else:
-        json =  ""
-    
+        json = ""
+
     return str(json)
-     
+
 
 def _encode_list_data(model):
+    b = len(model) > 1
+    valid = False
     json = "["
     for item in model:
+        if(b and valid):
+            json += ","
+            valid = False
         if(isinstance(item, dict)):
             string = _encode_dict_data(item)
             if(string is None or string == ""):
@@ -99,7 +104,7 @@ def _raw_model_encode(model, items):
             json += "\"" + attribute + "\":" + string
             valid = True
         else:
-            string = _encode_primitive_data(model, attribute, value)
+            string = _encode_primitive_data_attribute(model, attribute, value)
             if(string is not None and string != ""):
                 json += string
                 valid = True
@@ -107,34 +112,22 @@ def _raw_model_encode(model, items):
     return json
 
 
-def _encode_primitive_data(a, attribute, value):
-    json = ""
-    if(type(getattr(a, attribute)) == bool):
-        print(attribute + " = bool")
-        json += "\"" + attribute + "\":\"" + str(value).lower() + "\""
-        valid = True
-    elif(isinstance(getattr(a, attribute), str)):
-        print(attribute + " = String")
-        json += "\"" + attribute + "\":\"" + value + "\""
-        valid = True
-    elif(isinstance(getattr(a, attribute), int)):
-        print(attribute + " = integer")
-        json += "\"" + attribute + "\":" + str(value)
-        valid = True
-    elif(isinstance(getattr(a, attribute), float)):
-        print(attribute + " = float")
-        json += "\"" + attribute + "\":" + str(value)
-        valid = True
-    elif(isinstance(getattr(a, attribute), datetime.datetime)):
-        print(attribute + " = datetime")
-        json += "\"" + attribute + "\":\"" + \
-            str(value.replace(microsecond=0).isoformat('T')) + "\""
-        valid = True
-    elif(isinstance(getattr(a, attribute), complex)):
-        print(attribute + " = datetime")
-        json += "\"" + attribute + \
-            "\":{\"type\":\"complex\",\"real\":" + \
-                str(value.real) + ",\"imag\":" + str(value.imag) + "}"
-        valid = True
+def _encode_primitive_data_attribute(a, attribute, value):
+    return "\"" + attribute + "\":" + _encode_primitive_data(value)
 
-    return json
+
+def _encode_primitive_data(value):
+    if(isinstance(value, bool)):
+        return str(value).lower()
+    elif(isinstance(value, str)):
+        return "\"" + value + "\""
+    elif(isinstance(value, int)):
+        return str(value)
+    elif(isinstance(value, float)):
+        return str(value)
+    elif(isinstance(value, datetime.datetime)):
+        return "\"" + str(value.replace(microsecond=0).isoformat('T')) + "\""
+    elif(isinstance(value, complex)):
+        return "{\"type\":\"complex\",\"real\":" + \
+            str(value.real) + ",\"imag\":" + str(value.imag) + "}"
+    return "\"\""

@@ -178,7 +178,7 @@ def unJsonify(json_, typed=None):
         return typed
 
 
-def _parse_from_dict(typed, model):
+def parse_from_dict(typed, model):
     dict_ = model
     for key, value in dict_.items():
         if(isClass(getattr(typed, key))):
@@ -196,5 +196,5 @@ def parseModel(typed, key, value):
     module = __import__(clas.__module__)
     class_ = getattr(module, clas.__name__)
     instance = class_()
-    instance = _parse_from_dict(instance, value)
+    instance = parse_from_dict(instance, value)
     return instance

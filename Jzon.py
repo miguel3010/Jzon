@@ -203,7 +203,8 @@ def parse_from_dict(typed, model):
 
 def _parseModel(typed, key, value):
     clas = getattr(typed, key).__class__
-    module = __import__(clas.__module__)
+    m = clas.__module__
+    module = __import__(m, globals(), locals(), ['object'], 0) 
     class_ = getattr(module, clas.__name__)
     instance = class_()
     instance = parse_from_dict(instance, value)

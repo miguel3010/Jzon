@@ -1,6 +1,6 @@
 import datetime
 import types
-import json
+import json 
 
 # ENCODING
 
@@ -10,12 +10,15 @@ def isClass(model):
         return False
 
     if(isinstance(model, object)):
+        if(isinstance(model, datetime.datetime)
+                or isinstance(model, datetime.date)):
+            return False
+
         return not(isinstance(model, bool)
                    or isinstance(model, str)
                    or isinstance(model, int)
                    or isinstance(model, float)
                    or isinstance(model, complex)
-                   or isinstance(model, datetime.datetime)
                    or isinstance(model, dict)
                    or isinstance(model, list))
     return False
@@ -151,9 +154,11 @@ def _encode_primitive_data(value):
         return str(value)
     elif(isinstance(value, datetime.datetime)):
         return "\"" + str(value.replace(microsecond=0).isoformat('T')) + "\""
+    elif(isinstance(value,datetime.date)):        
+        f = datetime.datetime.combine(value, datetime.time.min)
+        return _encode_primitive_data(f)
     elif(isinstance(value, complex)):
-        return "{\"type\":\"complex\",\"real\":" + \
-            str(value.real) + ",\"imag\":" + str(value.imag) + "}"
+        return "{\"type\":\"complex\",\"real\":" + str(value.real) + ",\"imag\":" + str(value.imag) + "}"
     return "\"\""
 
 # DECODING
@@ -191,20 +196,23 @@ def unJsonify(json_, typed=None):
 def parse_from_dict(typed, model):
     dict_ = model
     for key, value in dict_.items():
-        if(isClass(getattr(typed, key))):
-            setattr(typed, key, _parseModel(typed, key, value))
-        else:
-            try:
-                setattr(typed, key, value)
-            except Exception:
-                pass
+        try:
+            if(isClass(getattr(typed, key))):
+                setattr(typed, key, _parseModel(typed, key, value))
+            else:
+                try:
+                    setattr(typed, key, value)
+                except Exception:
+                    pass
+        except Exception:
+            pass
     return typed
 
 
 def _parseModel(typed, key, value):
     clas = getattr(typed, key).__class__
     m = clas.__module__
-    module = __import__(m, globals(), locals(), ['object'], 0) 
+    module = __import__(m, globals(), locals(), ['object'], 0)
     class_ = getattr(module, clas.__name__)
     instance = class_()
     instance = parse_from_dict(instance, value)

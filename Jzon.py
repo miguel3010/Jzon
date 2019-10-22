@@ -1,10 +1,8 @@
 import datetime
 import types
-import json 
+import json
 
 # ENCODING
-
-
 def isClass(model):
     if(model is None):
         return False
@@ -20,7 +18,8 @@ def isClass(model):
                    or isinstance(model, float)
                    or isinstance(model, complex)
                    or isinstance(model, dict)
-                   or isinstance(model, list))
+                   or isinstance(model, list)
+                   or isinstance(model, bytearray))
     return False
 
 
@@ -57,7 +56,7 @@ def _encode_list_data(model):
     json = "["
     for item in model:
         if(b and valid):
-            json += ","
+            json += " , "
             valid = False
         if(isinstance(item, dict)):
             string = _encode_dict_data(item)
@@ -102,31 +101,31 @@ def _raw_model_encode(model, items):
     json = "{"
     for attribute, value in items:
         if(b and valid):
-            json += ","
+            json += " , "
             valid = False
         attr = None
         try:
             attr = getattr(model, attribute)
         except Exception:
-            pass
+            attr = value
 
         if(isinstance(attr, dict)):
             string = _encode_dict_data(attr)
             if(string is None or string == ""):
                 string = "{}"
-            json += "\"" + attribute + "\":" + string
+            json += "\"" + attribute + "\" : " + string
             valid = True
         elif (isClass(attr)):
             string = _encode_model_data(attr)
             if(string is None or string == ""):
                 string = "{}"
-            json += "\"" + attribute + "\":" + string
+            json += "\"" + attribute + "\" : " + string
             valid = True
         elif(isinstance(attr, list)):
             string = _encode_list_data(attr)
             if(string is None or string == ""):
                 string = "[]"
-            json += "\"" + attribute + "\":" + string
+            json += "\"" + attribute + "\" : " + string
             valid = True
         else:
             string = _encode_primitive_data_attribute(model, attribute, value)
@@ -138,7 +137,10 @@ def _raw_model_encode(model, items):
 
 
 def _encode_primitive_data_attribute(a, attribute, value):
-    return "\"" + attribute + "\":" + _encode_primitive_data(value)
+    if(attribute is None):
+        attribute = ""
+    
+    return "\"" + attribute + "\" : " + _encode_primitive_data(value)
 
 
 def _encode_primitive_data(value):
@@ -147,14 +149,16 @@ def _encode_primitive_data(value):
     if(isinstance(value, bool)):
         return str(value).lower()
     elif(isinstance(value, str)):
-        return "\"" + value + "\""
+        return toString(value) 
+    elif(isinstance(value, bytes)):
+        return toString(value.decode("unicode_escape"))
     elif(isinstance(value, int)):
         return str(value)
     elif(isinstance(value, float)):
         return str(value)
     elif(isinstance(value, datetime.datetime)):
-        return "\"" + str(value.replace(microsecond=0).isoformat('T')) + "\""
-    elif(isinstance(value,datetime.date)):        
+        return "\"" + str(value.replace(microsecond=0).isoformat())+"Z\""
+    elif(isinstance(value, datetime.date)):
         f = datetime.datetime.combine(value, datetime.time.min)
         return _encode_primitive_data(f)
     elif(isinstance(value, complex)):
@@ -162,8 +166,6 @@ def _encode_primitive_data(value):
     return "\"\""
 
 # DECODING
-
-
 def unJsonify(json_, typed=None):
     """
     Deserialization of an object class, dict or list into Python Object class or dict
@@ -174,6 +176,8 @@ def unJsonify(json_, typed=None):
     Returns:
         [type(typed)] -- dict if arg [typed] is None
     """
+    if(json_ is None or json_ == "" or (isinstance(json_, bytes) and json_.decode("utf-8") == "")):
+        return None
 
     if(typed is None):
         return unJsonify(json_, {})
@@ -217,3 +221,11 @@ def _parseModel(typed, key, value):
     instance = class_()
     instance = parse_from_dict(instance, value)
     return instance
+
+
+def toString(data: str):
+
+    data = json.dumps(data)
+    return data
+
+ 
